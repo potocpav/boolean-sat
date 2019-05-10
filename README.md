@@ -1,1 +1,1 @@
-# cookie-solver
+# Prepositional Logic Solving Library
