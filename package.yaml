@@ -1,0 +1,73 @@
+name:                boolean-sat
+version:             0.1.0.0
+github:              "potocpav/boolean-sat"
+license:             BSD3
+author:              "Pavel Potocek"
+maintainer:          "pavelpotocek@gmail.com"
+copyright:           "2019 Author name here"
+
+extra-source-files:
+- README.md
+- ChangeLog.md
+
+# Metadata used when publishing your package
+synopsis:            Propositional logic formula building, solving, and exporting
+category:            Constraints, Logic
+
+# To avoid duplicated efforts in documentation and dealing with the
+# complications of embedding Haddock markup inside cabal files, it is
+# common to point users to the README.md file.
+description:         Please see the README on GitHub at <https://github.com/potocpav/boolean-sat#readme>
+
+dependencies:
+- base >= 4.7 && < 5
+- mios >= 1.6.0
+- containers >= 0.5.7
+- cond >= 0.4
+- mtl >= 2.2
+
+library:
+  source-dirs: src
+
+executables:
+  simple:
+    main:                Main.hs
+    source-dirs:         examples/Simple
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    # - -O2
+    dependencies:
+    - boolean-sat
+  cookies:
+    main:                Main.hs
+    source-dirs:         examples/Cookies
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    # - -O2
+    dependencies:
+    - boolean-sat
+  sudoku:
+    main:                Main.hs
+    source-dirs:         examples/Sudoku
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    # - -O2
+    dependencies:
+    - boolean-sat
+
+tests:
+  boolean-sat-test:
+    main:                Spec.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - boolean-sat
