@@ -45,10 +45,12 @@ solve (CNF cnf' nVarsTotal vars) = do
             pokeArray buffer $ map convertVar clause
             cmsat_add_clause solver buffer (fromIntegral $ length clause)
     result <- cmsat_solve_wrapper solver
-    model <- peek =<< cmsat_get_model_wrapper solver
+    modelPtr <- cmsat_get_model_wrapper solver
+    model <- peek modelPtr
     c_arr <- peekArray (fromIntegral $ bool_num_vals model) (bool_vals model)
     let arr = map bool_x c_arr
     cmsat_free solver
+    free_wrapper modelPtr
 
     pure $ if result == 0
         then Just . M.fromList $ zip (S.toList vars) (map (>0) arr)

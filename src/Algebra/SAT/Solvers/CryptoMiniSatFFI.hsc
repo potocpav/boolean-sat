@@ -81,6 +81,8 @@ foreign import ccall "cmsat_get_model_wrapper" cmsat_get_model_wrapper
     :: Solver -> IO (Ptr CSliceLBool)
 foreign import ccall "cmsat_get_conflict_wrapper" cmsat_get_conflict_wrapper
     :: Solver -> IO (Ptr CSliceLit)
+foreign import ccall "free_wrapper" free_wrapper
+    :: Ptr a -> IO ()
 
 foreign import ccall "cmsat_set_num_threads" cmsat_set_num_threads
     :: Solver -> CUInt -> IO ()

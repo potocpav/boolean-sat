@@ -23,3 +23,7 @@ slice_Lit *cmsat_get_conflict_wrapper(const SATSolver* self) {
     *res = cmsat_get_conflict(self);
     return res;
 }
+
+void free_wrapper(void *thing) {
+    free(thing);
+}
