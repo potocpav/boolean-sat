@@ -4,11 +4,12 @@ github:              "potocpav/boolean-sat"
 license:             BSD3
 author:              "Pavel Potocek"
 maintainer:          "pavelpotocek@gmail.com"
-copyright:           "2019 Author name here"
+copyright:           "2019 Pavel Potocek"
 
 extra-source-files:
 - README.md
 - ChangeLog.md
+- c-wrapper/cryptominisat_c.h
 
 # Metadata used when publishing your package
 synopsis:            Propositional logic formula building, solving, and exporting
@@ -25,9 +26,13 @@ dependencies:
 - containers >= 0.5.7
 - cond >= 0.4
 - mtl >= 2.2
+- split >= 0.2
 
 library:
   source-dirs: src
+  include-dirs: c-wrapper
+  c-sources: c-wrapper/cryptominisat_c.c
+  extra-libraries: cryptominisat5
 
 executables:
   simple:

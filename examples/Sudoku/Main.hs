@@ -2,10 +2,13 @@
 
 import Prelude hiding (xor, not, (&&), (||))
 
-import           Algebra.SAT (Expr(Var), cnf, dimacsCnf, solveCnf)
+import           Algebra.SAT (Expr(Var), cnf, dimacsCnf, satSolveCnf)
 import           Control.Monad (guard)
 import           Data.Algebra.Boolean (Boolean(..))
-import           Data.Maybe (maybeToList)
+import           Data.List (findIndex)
+import           Data.List.Split (chunksOf)
+import           Data.Maybe (maybeToList, fromJust)
+import qualified Data.Map as M
 import qualified Data.Set as S
 
 
@@ -50,25 +53,25 @@ sudoku b = foldl1 (&&) $ [allNumsInSegment var, allNumsInSegment var', allNumsIn
 
 
 board :: [[Maybe Int]]
-board = map (map (\case
-    "-" -> Nothing
-    x -> Just (read x)
-    ) . words) $
-    [ "5 6 - - - - - - -"
-    , "- - - - - - - - -"
-    , "- - - - - - - - -"
-    , "- - - - - - - - -"
-    , "- - - - - - - - -"
-    , "- - - - - - - - -"
-    , "- - - - - - - - -"
-    , "- - - - - - - - -"
-    , "- - - - - - - - -"
+board = map (\case {"-" -> Nothing; x -> Just (read x)}) . words <$>
+    [ "1 - - - - 7 - 9 -"
+    , "- 3 - - 2 - - - 8"
+    , "- - 9 6 - - 5 - -"
+    , "- - 5 3 - - 9 - -"
+    , "- 1 - - 8 - - - 2"
+    , "6 - - - - 4 - - -"
+    , "3 - - - - - - 1 -"
+    , "- 4 - - - - - - 7"
+    , "- - 7 - - - 3 - -"
     ]
+
 
 main :: IO ()
 main = do
     let e = sudoku board
     let cnf' = cnf e
     writeFile "sudoku.dimacs" $ dimacsCnf cnf'
-    -- print <$> solveCnf cnf'
+    Just model <- satSolveCnf cnf'
+    let board = chunksOf 9 . map (succ . fromJust . findIndex snd) $ chunksOf 9 (M.toList model)
+    putStrLn . unlines $ map (unwords . map show) board
     pure ()

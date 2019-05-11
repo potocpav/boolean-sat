@@ -2,7 +2,7 @@
 
 import Prelude hiding (xor, not, (&&), (||))
 
-import           Algebra.SAT (Expr(Var), solve, dimacs, cnf)
+import           Algebra.SAT (Expr(Var), satSolve, dimacs, cnf)
 import           Control.Monad (join)
 import           Data.Algebra.Boolean (Boolean(..))
 import           Data.List (intercalate)
@@ -50,7 +50,7 @@ goal = map (\case {'o' -> true; '-' -> false}) <$>
 
 main :: IO ()
 main = do
-    solution <- solve (expr goal)
+    solution <- satSolve (expr goal)
     case solution of
         Just s  -> dispSolution (M.toList s)
         Nothing -> pure ()
