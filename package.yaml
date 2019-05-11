@@ -9,7 +9,9 @@ copyright:           "2019 Pavel Potocek"
 extra-source-files:
 - README.md
 - ChangeLog.md
+- LICENSE
 - c-wrapper/cryptominisat_c.h
+- c-wrapper/cryptominisat_c.c
 
 # Metadata used when publishing your package
 synopsis:            Propositional logic formula building, solving, and exporting

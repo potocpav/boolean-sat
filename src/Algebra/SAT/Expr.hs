@@ -3,7 +3,6 @@
 {- |
 Module      :  $Header$
 Description :  Boolean expression data type, CNF conversion, and DIMACS export
-
 -}
 
 module Algebra.SAT.Expr
@@ -72,7 +71,7 @@ instance Foldable Expr where
 -- Variables are represented by non-zero integers, where positive numbers are
 -- positive literals, and negative numbers are negative literals. The absolute
 -- value determines atom's identity.
--- User-defined variables are stored in a 'Set', and their ordering is used
+-- User-defined variables are stored in a 'Data.Set.Set', and their ordering is used
 -- to identify them with the lowest integers ([1,2,3,..]) in the clause list.
 data CNF a = CNF
     [[Int]]   -- ^ Clause list

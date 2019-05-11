@@ -14,6 +14,7 @@ import Control.Monad
 import Control.Monad.State
 
 
+-- | Supply monad
 newtype Supply a = Supply { unSupply :: State Int a } deriving (Functor, Applicative, Monad)
 
 

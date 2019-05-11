@@ -51,9 +51,15 @@ instance Storable CLBool where
     poke = undefined
 
 instance Storable CSliceLBool where
+    sizeOf _ = (#size slice_lbool)
+    alignment _ = (#alignment slice_lbool)
     peek ptr = CSliceLBool
         <$> (#peek slice_lbool, vals) ptr
         <*> (#peek slice_lbool, num_vals) ptr
+    poke ptr slice = do
+        (#poke slice_lbool, vals) ptr $ bool_vals slice
+        (#poke slice_lbool, num_vals) ptr $ bool_num_vals slice
+
 
 -- instance Storable CSliceLit where
 --  peek ptr = CSliceLit <$> peekByteOff ptr 0
