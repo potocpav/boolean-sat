@@ -2,7 +2,7 @@
 import Prelude hiding (xor, not, (&&), (||))
 
 -- import qualified Algebra.SAT.FFI as FFI
-import Algebra.SAT          (Expr(Var), solve)
+import Algebra.SAT          (Expr(Var), solveExpr)
 import Data.Algebra.Boolean (Boolean(..))
 
 
@@ -19,18 +19,12 @@ data Vars = Guilty
           deriving (Eq, Ord, Show)
 
 
--- main = do
---     sat_solve
---     pure ()
---     -- FFI.hello
-
-
 main = do
     let premise = (Var Guilty --> Var Punished) && Var Guilty
         consequence = Var Punished
         expr = premise && not consequence
 
     -- if expr is UNSAT, then premise implies consequence
-    solution <- solve expr
+    solution <- solveExpr expr
     putStrLn $ "Socrate is " ++
         if solution == Nothing then "right." else "wrong!"

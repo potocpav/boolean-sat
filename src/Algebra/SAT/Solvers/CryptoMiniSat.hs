@@ -1,10 +1,16 @@
+{- |
+Module      :  $Header$
+Description :  CryptoMiniSat high-level interface
 
-module Algebra.SAT.CryptoMiniSat
+High-level wrapper of the <https://github.com/msoos/cryptominisat CryptoMiniSat>
+solver.
+-}
+
+module Algebra.SAT.Solvers.CryptoMiniSat
     ( solve
-    , solveCnf
     ) where
 
-import Algebra.SAT.FFI as FFI
+import Algebra.SAT.Solvers.CryptoMiniSatFFI as FFI
 import Algebra.SAT.Expr (CNF(..), Expr, cnf)
 import Control.Monad (forM_)
 import qualified Data.Map as M
@@ -15,18 +21,22 @@ import Foreign.C.Types (CUInt)
 import GHC.Conc (getNumCapabilities)
 
 
-solve :: Ord a => Expr a -> IO (Maybe (M.Map a Bool))
-solve = solveCnf . cnf
-
-
+-- | Convert a variable index from the positive/negative convention (negative
+-- numbers represent negative atoms) to an unsigned convention, where
+-- 'a `mod` 2 == 0' represents negative atoms, and 'a `mod` 2 == 1' represents
+-- positive atoms.
 convertVar :: Int -> CLit
 convertVar i | i > 0 = CLit . fromIntegral $ (i-1) * 2 + 1
              | i < 0 = CLit . fromIntegral $ (-i-1) * 2
              | otherwise = error "Var mustn't be zero"
 
 
-solveCnf :: Ord a => CNF a -> IO (Maybe (M.Map a Bool))
-solveCnf (CNF cnf' nVarsTotal vars) = do
+-- | Use the <https://github.com/msoos/cryptominisat CryptoMiniSat> solver to
+-- find a model of a given CNF expression. Returns 'Nothing' if the problem
+-- doesn't have a model (is unsatisfiable), otherwise returns 'Just' an
+-- arbitrary model.
+solve :: Ord a => CNF a -> IO (Maybe (M.Map a Bool))
+solve (CNF cnf' nVarsTotal vars) = do
     solver <- cmsat_new
     cmsat_set_num_threads solver =<< fromIntegral <$> getNumCapabilities
     cmsat_new_vars solver (fromIntegral nVarsTotal)

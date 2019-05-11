@@ -1,6 +1,22 @@
+{- |
+Module      :  $Header$
+Description :  CryptoMiniSat low-level interface
+
+Low-level foreign function interface to the
+<https://github.com/msoos/cryptominisat CryptoMiniSat> solver. The
+<https://github.com/msoos/cryptominisat/blob/master/src/cryptominisat_c.h.in raw C language bindings>
+are indirectly called through a
+<https://github.com/potocpav/boolean-sat/tree/master/c-wrapper thin C wrapper>.
+This is necessary, because the raw functions return C structs by value, which
+is not supported by GHC.
+
+Usage of this low-level interface may be inspired by the high-level
+wrapper code in "Algebra.SAT.Solvers.CryptoMiniSat".
+-}
+
 {-# LANGUAGE ForeignFunctionInterface #-}
 
-module Algebra.SAT.FFI where
+module Algebra.SAT.Solvers.CryptoMiniSatFFI where
 
 import Foreign.C.Types
 import Foreign.Ptr
@@ -11,10 +27,13 @@ import Data.Word
 #include "cryptominisat_c.h"
 
 
+-- | Opaque structure containing solver state and configuration
 data SATSolver
 type Solver = Ptr SATSolver
 
-data CLit = CLit { lit_x :: Int32 }
+-- | Atom representation. If 'lit_x' is odd, atom is positive, otherwise, atom
+-- is negative.
+data CLit = CLit { lit_x :: Word32 }
 data CLBool = CLBool { bool_x :: Word8 }
 data CSliceLBool = CSliceLBool { bool_vals :: Ptr CLBool, bool_num_vals :: CSize }
 data CSliceLit = CSliceLit { lit_vals :: Ptr CLit, lit_num_vals :: CSize }
