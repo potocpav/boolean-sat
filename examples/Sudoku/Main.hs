@@ -2,7 +2,7 @@
 
 import Prelude hiding (xor, not, (&&), (||))
 
-import           Algebra.SAT (Expr(Var), cnf, dimacsCnf, satSolveCnf)
+import           Algebra.SAT (Expr(Var), cnf, dimacsCnf, solveCnf)
 import           Control.Monad (guard)
 import           Data.Algebra.Boolean (Boolean(..))
 import           Data.List (findIndex)
@@ -19,7 +19,7 @@ var' n i j = var n j i
 
 var'' n i j = var n i' j' where
     i' = ((i-1) `mod` 3) + 3 * ((j-1) `mod` 3) + 1
-    j' = ((i-1) `div` 3) + 3 * ((j-1) `mod` 3) + 1
+    j' = ((i-1) `div` 3) + 3 * ((j-1) `div` 3) + 1
 
 
 sudoku :: [[Maybe Int]] -> Expr Int
@@ -54,7 +54,7 @@ sudoku b = foldl1 (&&) $ [allNumsInSegment var, allNumsInSegment var', allNumsIn
 
 board :: [[Maybe Int]]
 board = map (\case {"-" -> Nothing; x -> Just (read x)}) . words <$>
-    [ "1 - - - - 7 - 9 -"
+    [ "1 6 - - - 7 - 9 -"
     , "- 3 - - 2 - - - 8"
     , "- - 9 6 - - 5 - -"
     , "- - 5 3 - - 9 - -"

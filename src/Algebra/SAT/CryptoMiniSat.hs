@@ -1,18 +1,22 @@
 
-module Algebra.SAT.Solver where
+module Algebra.SAT.CryptoMiniSat
+    ( solve
+    , solveCnf
+    ) where
 
 import Algebra.SAT.FFI as FFI
-import Algebra.SAT.SAT (CNF(..), Expr, cnf)
+import Algebra.SAT.Expr (CNF(..), Expr, cnf)
 import Control.Monad (forM_)
 import qualified Data.Map as M
 import qualified Data.Set as S
 import Foreign.Marshal.Array (allocaArray, pokeArray, peekArray)
 import Foreign.Storable (peek)
 import Foreign.C.Types (CUInt)
+import GHC.Conc (getNumCapabilities)
 
 
-satSolve :: Ord a => Expr a -> IO (Maybe (M.Map a Bool))
-satSolve = satSolveCnf . cnf
+solve :: Ord a => Expr a -> IO (Maybe (M.Map a Bool))
+solve = solveCnf . cnf
 
 
 convertVar :: Int -> CLit
@@ -21,10 +25,10 @@ convertVar i | i > 0 = CLit . fromIntegral $ (i-1) * 2 + 1
              | otherwise = error "Var mustn't be zero"
 
 
-satSolveCnf :: Ord a => CNF a -> IO (Maybe (M.Map a Bool))
-satSolveCnf (CNF cnf' nVarsTotal vars) = do
+solveCnf :: Ord a => CNF a -> IO (Maybe (M.Map a Bool))
+solveCnf (CNF cnf' nVarsTotal vars) = do
     solver <- cmsat_new
-    cmsat_set_num_threads solver 4
+    cmsat_set_num_threads solver =<< fromIntegral <$> getNumCapabilities
     cmsat_new_vars solver (fromIntegral nVarsTotal)
     allocaArray 3 $ \buffer ->
         forM_ cnf' $ \clause -> do

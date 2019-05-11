@@ -1,7 +1,7 @@
 module Algebra.SAT
-    ( module Algebra.SAT.SAT
-    , module Algebra.SAT.Solver
+    ( module Algebra.SAT.Expr
+    , module Algebra.SAT.CryptoMiniSat
     ) where
 
-import Algebra.SAT.SAT
-import Algebra.SAT.Solver
+import Algebra.SAT.Expr
+import Algebra.SAT.CryptoMiniSat

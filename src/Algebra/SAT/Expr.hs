@@ -1,11 +1,9 @@
 {-# LANGUAGE InstanceSigs #-}
 
-module Algebra.SAT.SAT
+module Algebra.SAT.Expr
     ( Expr(..)
     , CNF(..)
     , cnf
-    , solve
-    , solveCnf
     , dimacs
     , dimacsCnf
     ) where
@@ -18,7 +16,6 @@ import qualified Data.Set as S
 import qualified Data.Map.Strict as M
 import           Data.Algebra.Boolean (Boolean(..))
 import           Control.Monad.Supply
--- import           Data.Algebra.Boolean.Negable (Negable(..))
 import           SAT.Mios (CNFDescription(..), solveSAT)
 
 
@@ -61,13 +58,8 @@ instance Foldable Expr where
     foldMap f F = mempty
 
 
-
-class Negable a where
-    neg :: a -> a
-
-
-instance Negable Int where
-    neg i = -i
+neg :: Int -> Int
+neg i = -i
 
 
 varsToInt :: Ord a => Expr a -> (Expr Int, S.Set a)
@@ -110,18 +102,6 @@ cnf e = let
     (cnf', nVarsTotal) = tseytin e' (length vars + 1)
     in CNF cnf' nVarsTotal vars
 
-
-solve :: Ord a => Expr a -> IO (Maybe (M.Map a Bool))
-solve = solveCnf . cnf
-
-
-solveCnf :: Ord a => CNF a -> IO (Maybe (M.Map a Bool))
-solveCnf (CNF cnf' nVarsTotal vars) = do
-    let descr = CNFDescription nVarsTotal (length cnf') "file"
-    l <- solveSAT descr cnf'
-    pure $ if length l > 0
-        then Just . M.fromList $ zip (S.toList vars) (map (>0) l)
-        else Nothing
 
 dimacs :: Ord a => Expr a -> String
 dimacs = dimacsCnf . cnf

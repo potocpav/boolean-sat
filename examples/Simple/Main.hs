@@ -2,7 +2,7 @@
 import Prelude hiding (xor, not, (&&), (||))
 
 -- import qualified Algebra.SAT.FFI as FFI
-import Algebra.SAT          (Expr(Var), solve, satSolve)
+import Algebra.SAT          (Expr(Var), solve)
 import Data.Algebra.Boolean (Boolean(..))
 
 
@@ -31,6 +31,6 @@ main = do
         expr = premise && not consequence
 
     -- if expr is UNSAT, then premise implies consequence
-    solution <- satSolve expr
+    solution <- solve expr
     putStrLn $ "Socrate is " ++
         if solution == Nothing then "right." else "wrong!"
