@@ -24,11 +24,11 @@ description:         Please see the README on GitHub at <https://github.com/poto
 
 dependencies:
 - base >= 4.7 && < 5
-- mios >= 1.6.2
-- containers >= 0.5.7
-- cond >= 0.4
-- mtl >= 2.2
-- split >= 0.2
+- mios == 1.6.*
+- containers == 0.6.*
+- cond == 0.4.*
+- mtl == 2.2.*
+- split == 0.2.*
 
 library:
   source-dirs: src

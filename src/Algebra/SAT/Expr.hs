@@ -42,7 +42,7 @@ data Expr a = Var a                     -- ^ Logical variable
 instance Boolean (Expr a) where
     true = T
     false = F
-    not a = Not a
+    not = Not
     a || b = Or a b
     a && b = And a b
 
@@ -143,4 +143,4 @@ dimacsExpr = dimacs . cnf
 dimacs :: CNF a -> String
 dimacs (CNF e nVars vars) = unlines $
     ("p cnf " ++ show nVars ++ " " ++ show (length e)) :
-    map (\vs -> intercalate " " (map show vs) ++ " 0") e
+    map (\vs -> unwords (map show vs) ++ " 0") e

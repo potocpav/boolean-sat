@@ -11,3 +11,7 @@ This library provides:
 * [Usage examples](examples), including a Sudoku solver
 
 Documentation is hosted on hackage.
+
+## Dependencies
+
+[CryptoMiniSat](https://github.com/msoos/cryptominisat) SAT solver is needed in order to build & use this library.
