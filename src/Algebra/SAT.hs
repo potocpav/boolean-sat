@@ -12,7 +12,7 @@ module Algebra.SAT
     , solveExpr
     ) where
 
-import           Algebra.SAT.Expr (Expr(..), CNF(..), cnf, dimacs, dimacsExpr)
+import           Algebra.SAT.Expr (Expr(..), CNF(..), cnf, dimacs, dimacsExpr, numClauses, numVars, numLiterals)
 import           Algebra.SAT.Solvers.CryptoMiniSat (solve)
 import qualified Data.Map as M
 

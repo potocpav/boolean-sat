@@ -2,7 +2,7 @@
 
 import Prelude hiding (xor, not, and, or)
 
-import           Algebra.SAT (Expr(Var), cnf, dimacs, solve)
+import           Algebra.SAT (Expr(Var), cnf, dimacs, solve, numClauses, numVars, numLiterals)
 import           Control.Monad (guard)
 import           Data.Algebra.Boolean (Boolean(..))
 import           Data.List (findIndex)
@@ -71,6 +71,10 @@ main = do
     let e = sudoku board
     let cnf' = cnf e
     writeFile "sudoku.dimacs" $ dimacs cnf'
+    putStrLn $ "Number of clauses:   " <> show (numClauses cnf')
+    putStrLn $ "          literals:  " <> show (numLiterals cnf')
+    putStrLn $ "          variables: " <> show (numVars cnf')
+    putStrLn $ ""
     Just model <- solve cnf'
     let board = chunksOf 9 . map (succ . fromJust . findIndex snd) $ chunksOf 9 (M.toList model)
     putStrLn . unlines $ map (unwords . map show) board

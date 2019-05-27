@@ -8,6 +8,9 @@ Description :  Boolean expression data type, CNF conversion, and DIMACS export
 module Algebra.SAT.Expr
     ( Expr(..)
     , CNF(..)
+    , numVars
+    , numClauses
+    , numLiterals
     , cnf
     , dimacs
     , dimacsExpr
@@ -20,20 +23,36 @@ import           Data.List (intercalate)
 import qualified Data.Set as S
 import qualified Data.Map.Strict as M
 import           Data.Algebra.Boolean (Boolean(..))
+import           Data.Foldable (fold)
 import           Control.Monad.Supply
+import           Control.Monad
 
 
 -- | Boolean expression data type.
 --
--- The expression usually contains variables satisfying the 'Ord' constraint.
+-- The expression usually contains variables satisfying the `Ord` constraint.
 --
 -- Usually, it is more comfortable to construct an expression using generic
--- 'Boolean' functions than using constructors directly (the only exception
+-- `Boolean` functions than using constructors directly (the only exception
 -- being the `Var` constructor).
-data Expr a = Var a                     -- ^ Logical variable
-            | Not (Expr a)
-            | And (Expr a) (Expr a)
-            | Or (Expr a) (Expr a)
+--
+-- The `Expr` type could be made much simpler by omitting some constructors,
+-- as there are multiple ways to write the same formula:
+--
+-- > Or a b == Orr [a, b]
+-- > And a b == And [a, b]
+-- > T == Andd []
+-- > F == Orr []
+--
+-- A richer structure is good for debugging and pretty-printing, but increases
+-- code duplication. The list constructors (`Andd`, `Orr`) create clauses with
+-- N>3 literals, so the output may not be suitable to 3-SAT solvers.
+data Expr a = Var !a                     -- ^ Logical variable
+            | Not !(Expr a)
+            | And !(Expr a) !(Expr a)
+            | Or !(Expr a) !(Expr a)
+            | Orr ![Expr a]              -- ^ Disjunction of N `Expr`s
+            | Andd ![Expr a]             -- ^ Conjunction of N `Expr`s
             | T                         -- ^ True
             | F                         -- ^ False
           deriving (Show)
@@ -45,6 +64,8 @@ instance Boolean (Expr a) where
     not = Not
     a || b = Or a b
     a && b = And a b
+    or = Orr . foldMap pure
+    and = Andd . foldMap pure
 
 instance Functor Expr where
     fmap :: (a -> b) -> Expr a -> Expr b
@@ -52,6 +73,8 @@ instance Functor Expr where
     fmap f (Not e) = Not (fmap f e)
     fmap f (And e1 e2) = And (fmap f e1) (fmap f e2)
     fmap f (Or e1 e2) = Or (fmap f e1) (fmap f e2)
+    fmap f (Orr es) = Orr (fmap f <$> es)
+    fmap f (Andd es) = Andd (fmap f <$> es)
     fmap f T = T
     fmap f F = F
 
@@ -61,6 +84,8 @@ instance Foldable Expr where
     foldMap f (Not e) = foldMap f e
     foldMap f (And e1 e2) = foldMap f e1 <> foldMap f e2
     foldMap f (Or e1 e2) = foldMap f e1 <> foldMap f e2
+    foldMap f (Orr es) = fold (foldMap f <$> es)
+    foldMap f (Andd es) = fold (foldMap f <$> es)
     foldMap f T = mempty
     foldMap f F = mempty
 
@@ -74,9 +99,24 @@ instance Foldable Expr where
 -- User-defined variables are stored in a 'Data.Set.Set', and their ordering is used
 -- to identify them with the lowest integers ([1,2,3,..]) in the clause list.
 data CNF a = CNF
-    [[Int]]   -- ^ Clause list
-    Int       -- ^ Number of logical variables
-    (S.Set a) -- ^ Set of user-defined variables
+    ![[Int]]   -- ^ Clause list
+    !Int       -- ^ Number of logical variables
+    !(S.Set a) -- ^ Set of user-defined variables
+
+
+-- | Get the total number of variables, including auto-generated ones
+numVars :: CNF a -> Int
+numVars (CNF _ i _) = i
+
+
+-- | Get the total number of clauses in the CNF formula
+numClauses :: CNF a -> Int
+numClauses (CNF l _ _) = length l
+
+
+-- | Get the total number of clauses in the CNF formula
+numLiterals :: CNF a -> Int
+numLiterals (CNF l _ _) = sum $ map length l
 
 
 -- | Convert variables in an expression to integral format, and produce
@@ -109,6 +149,14 @@ tseytin e varI = ([v] : l, i-1) where
         (m, b) <- go f
         x <- fresh
         pure ([-x, a, b] : [-a, x] : [-b, x] : (l ++ m), x)
+    go (Orr ee) = do
+        (ll, aa) <- unzip <$> mapM go ee
+        x <- fresh
+        pure ((-x : aa) : map (\a -> [-a, x]) aa ++ join ll, x)
+    go (Andd ee) = do
+        (ll, aa) <- unzip <$> mapM go ee
+        x <- fresh
+        pure ((x : map (0-) aa) : map (\a -> [a, -x]) aa ++ join ll, x)
     go T = do
         x <- fresh
         pure ([[x]], x)
