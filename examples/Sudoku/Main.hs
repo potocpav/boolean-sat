@@ -1,6 +1,6 @@
 {-# LANGUAGE LambdaCase #-}
 
-import Prelude hiding (xor, not, (&&), (||))
+import Prelude hiding (xor, not, and, or)
 
 import           Algebra.SAT (Expr(Var), cnf, dimacs, solve)
 import           Control.Monad (guard)
@@ -23,30 +23,30 @@ var'' n i j = var n i' j' where
 
 
 sudoku :: [[Maybe Int]] -> Expr Int
-sudoku b = foldl1 (&&) $ [allNumsInSegment var, allNumsInSegment var', allNumsInSegment var'', justOneNumber, board b] where
+sudoku b = and [allNumsInSegment var, allNumsInSegment var', allNumsInSegment var'', justOneNumber, board b] where
 
     board :: [[Maybe Int]] -> Expr Int
-    board ss = foldl1 (&&) $ do
+    board ss = and $ do
         (j, r) <- zip [1..] ss
         (i, mn) <- zip [1..] r
         n <- maybeToList mn
         pure (var n i j)
 
     allNumsInSegment :: (Int -> Int -> Int -> Expr Int) -> Expr Int
-    allNumsInSegment var_ = foldl1 (&&) $ do
+    allNumsInSegment var_ = and $ do
         j <- [1..9]
         num <- [1..9]
-        pure . foldl1 (||) $ do
+        pure . or $ do
             i <- [1..9]
             pure (var_ num i j)
 
     justOneNumber :: Expr Int
-    justOneNumber = foldl1 (&&) $ do
+    justOneNumber = and $ do
         i <- [1..9]
         j <- [1..9]
-        pure . foldl1 (||) $ do
+        pure . or $ do
             num <- [1..9]
-            pure . foldl1 (&&) $ var num i j : do
+            pure . and $ var num i j : do
                 other <- [1..9]
                 guard $ other /= num
                 pure $ not (var other i j)

@@ -30,7 +30,7 @@ Example board state after clicking on "x":
 -}
 module Main where
 
-import Prelude hiding (xor, not, (&&), (||))
+import Prelude hiding (xor, not, or, (&&))
 
 import           Algebra.SAT (Expr(Var), solveExpr, dimacsExpr, cnf)
 import           Control.Monad (join, guard)
@@ -72,7 +72,7 @@ exprs startState = zipWithB xor (fromBool <$> startState) $
 
 -- | Expression that is True iff all squares are False (empty)
 expr :: Board Bool -> Expr Pos
-expr goal = not . foldr1 (||) $ exprs goal
+expr goal = not . or $ exprs goal
 
 
 -- | Display the solution
