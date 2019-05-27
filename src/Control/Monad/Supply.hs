@@ -20,7 +20,7 @@ newtype Supply a = Supply { unSupply :: State Int a } deriving (Functor, Applica
 
 -- | Run the monad using a starting value
 runSupply :: Supply a -> Int -> (a, Int)
-runSupply (Supply st) i = runState st i
+runSupply (Supply st) = runState st
 
 
 -- | Get a fresh integer and advance the internal counter

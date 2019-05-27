@@ -8,11 +8,13 @@ directly from their respective modules.
 
 module Algebra.SAT
     ( module Algebra.SAT.Expr
+    , module Algebra.SAT.CNF
     , solve
     , solveExpr
     ) where
 
-import           Algebra.SAT.Expr (Expr(..), CNF(..), cnf, dimacs, dimacsExpr, numClauses, numVars, numLiterals)
+import           Algebra.SAT.Expr (Expr(..), CNF(..), cnf, dimacsExpr)
+import           Algebra.SAT.CNF (CNF(..), dimacs, numClauses, numVars, numLiterals)
 import           Algebra.SAT.Solvers.CryptoMiniSat (solve)
 import qualified Data.Map as M
 

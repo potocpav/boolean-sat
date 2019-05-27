@@ -2,30 +2,27 @@
 
 {- |
 Module      :  $Header$
-Description :  Boolean expression data type, CNF conversion, and DIMACS export
+Description :  Boolean expression data type
 -}
 
 module Algebra.SAT.Expr
     ( Expr(..)
     , CNF(..)
-    , numVars
-    , numClauses
-    , numLiterals
     , cnf
-    , dimacs
     , dimacsExpr
     ) where
 
 import Prelude hiding (not)
 
-import           Data.Maybe
+-- import           Data.Maybe
 import           Data.List (intercalate)
 import qualified Data.Set as S
 import qualified Data.Map.Strict as M
 import           Data.Algebra.Boolean (Boolean(..))
 import           Data.Foldable (fold)
-import           Control.Monad.Supply
-import           Control.Monad
+import           Control.Monad.Supply (Supply, fresh, runSupply)
+import           Algebra.SAT.CNF (CNF(..), dimacs)
+import           Control.Monad (join)
 
 
 -- | Boolean expression data type.
@@ -61,11 +58,22 @@ data Expr a = Var !a                     -- ^ Logical variable
 instance Boolean (Expr a) where
     true = T
     false = F
-    not = Not
     a || b = Or a b
     a && b = And a b
     or = Orr . foldMap pure
     and = Andd . foldMap pure
+    not x = Not x
+
+    -- -- | Convert to CNF right away
+    -- not T = F
+    -- not F = T
+    -- not (Not a) = a
+    -- not (Or a b) = And (not a) (not b)
+    -- not (And a b) = Or (not a) (not b)
+    -- not (Orr aa) = Andd (not <$> aa)
+    -- not (Andd aa) = Orr (not <$> aa)
+    -- not (Var a) = Not (Var a)
+
 
 instance Functor Expr where
     fmap :: (a -> b) -> Expr a -> Expr b
@@ -78,6 +86,7 @@ instance Functor Expr where
     fmap f T = T
     fmap f F = F
 
+
 instance Foldable Expr where
     foldMap :: Monoid m => (a -> m) -> Expr a -> m
     foldMap f (Var a) = f a
@@ -88,35 +97,6 @@ instance Foldable Expr where
     foldMap f (Andd es) = fold (foldMap f <$> es)
     foldMap f T = mempty
     foldMap f F = mempty
-
-
--- | <https://en.wikipedia.org/wiki/Conjunctive_normal_form Conjunctive normal form (CNF)>
--- boolean expression representation.
---
--- Variables are represented by non-zero integers, where positive numbers are
--- positive literals, and negative numbers are negative literals. The absolute
--- value determines atom's identity.
--- User-defined variables are stored in a 'Data.Set.Set', and their ordering is used
--- to identify them with the lowest integers ([1,2,3,..]) in the clause list.
-data CNF a = CNF
-    ![[Int]]   -- ^ Clause list
-    !Int       -- ^ Number of logical variables
-    !(S.Set a) -- ^ Set of user-defined variables
-
-
--- | Get the total number of variables, including auto-generated ones
-numVars :: CNF a -> Int
-numVars (CNF _ i _) = i
-
-
--- | Get the total number of clauses in the CNF formula
-numClauses :: CNF a -> Int
-numClauses (CNF l _ _) = length l
-
-
--- | Get the total number of clauses in the CNF formula
-numLiterals :: CNF a -> Int
-numLiterals (CNF l _ _) = sum $ map length l
 
 
 -- | Convert variables in an expression to integral format, and produce
@@ -135,20 +115,13 @@ tseytin e varI = ([v] : l, i-1) where
 
     go :: Expr Int -> Supply ([[Int]], Int)
     go (Var v) = pure ([], v)
+    -- | Optimization: do not introduce variables for a negative literals.
+    go (Not (Var v)) = pure ([], -v)
+    -- go (Not (Not e)) = go e
     go (Not e) = do
         (l, a) <- go e
         x <- fresh
         pure ([x, a] : [-x, -a] : l, x)
-    go (And e f) = do
-        (l, a) <- go e
-        (m, b) <- go f
-        x <- fresh
-        pure ([-x, a] : [-x, b] : [-a, -b, x] : (l ++ m), x)
-    go (Or e f) = do
-        (l, a) <- go e
-        (m, b) <- go f
-        x <- fresh
-        pure ([-x, a, b] : [-a, x] : [-b, x] : (l ++ m), x)
     go (Orr ee) = do
         (ll, aa) <- unzip <$> mapM go ee
         x <- fresh
@@ -157,6 +130,8 @@ tseytin e varI = ([v] : l, i-1) where
         (ll, aa) <- unzip <$> mapM go ee
         x <- fresh
         pure ((x : map (0-) aa) : map (\a -> [a, -x]) aa ++ join ll, x)
+    go (And e f) = go (Andd [e, f])
+    go (Or e f) = go (Orr [e, f])
     go T = do
         x <- fresh
         pure ([[x]], x)
@@ -181,14 +156,3 @@ cnf e = let
 -- Useful for interfacing with external SAT solvers.
 dimacsExpr :: Ord a => Expr a -> String
 dimacsExpr = dimacs . cnf
-
-
--- | Convert an expression in CNF into a
--- <http://www.domagoj-babic.com/uploads/ResearchProjects/Spear/dimacs-cnf.pdf DIMACS>
--- text format.
---
--- Useful for interfacing with external SAT solvers.
-dimacs :: CNF a -> String
-dimacs (CNF e nVars vars) = unlines $
-    ("p cnf " ++ show nVars ++ " " ++ show (length e)) :
-    map (\vs -> unwords (map show vs) ++ " 0") e

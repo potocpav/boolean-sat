@@ -4,7 +4,7 @@ import Prelude hiding (xor, not, (&&), (||))
 -- import qualified Algebra.SAT.FFI as FFI
 import Algebra.SAT          (Expr(Var), solveExpr)
 import Data.Algebra.Boolean (Boolean(..))
-import Data.Maybe           (isJust)
+import Data.Maybe           (isNothing)
 
 
 -- Socrates says:
@@ -28,4 +28,4 @@ main = do
     -- if expr is UNSAT, then premise implies consequence
     solution <- solveExpr expr
     putStrLn $ "Socrates is " ++
-        if isJust solution then "wrong!" else "right."
+        if isNothing solution then "right." else "wrong!"
