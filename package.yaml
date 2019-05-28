@@ -78,3 +78,5 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - boolean-sat
+    # - QuickCheck == 2.12.*
+    - HUnit == 1.6.*

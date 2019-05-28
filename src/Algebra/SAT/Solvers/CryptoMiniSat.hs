@@ -10,15 +10,16 @@ module Algebra.SAT.Solvers.CryptoMiniSat
     ( solve
     ) where
 
-import Algebra.SAT.Solvers.CryptoMiniSatFFI as FFI
-import Algebra.SAT.Expr (CNF(..), Expr, cnf)
-import Control.Monad (forM_)
+import           Algebra.SAT.Solvers.CryptoMiniSatFFI as FFI
+import           Algebra.SAT.Expr (CNF(..), Expr, cnf)
+import           Control.Monad (forM_)
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
-import Foreign.Marshal.Array (allocaArray, pokeArray, peekArray)
-import Foreign.Storable (peek)
-import Foreign.C.Types (CUInt)
-import GHC.Conc (getNumCapabilities)
+import           Foreign.Marshal.Array (allocaArray, pokeArray, peekArray)
+import           Foreign.Storable (peek)
+import           Foreign.C.Types (CUInt)
+import           GHC.Conc (getNumCapabilities)
+import           System.IO.Unsafe (unsafePerformIO)
 
 
 -- | Convert a variable index from the positive/negative convention (negative
@@ -35,8 +36,8 @@ convertVar i | i > 0 = CLit . fromIntegral $ (i-1) * 2 + 1
 -- find a model of a given CNF expression. Returns 'Nothing' if the problem
 -- doesn't have a model (is unsatisfiable), otherwise returns 'Just' an
 -- arbitrary model.
-solve :: Ord a => CNF a -> IO (Maybe (M.Map a Bool))
-solve (CNF cnf' nVarsTotal vars) = do
+solveIO :: Ord a => CNF a -> IO (Maybe (M.Map a Bool))
+solveIO (CNF cnf' nVarsTotal vars) = do
     solver <- cmsat_new
     cmsat_set_num_threads solver =<< fromIntegral <$> getNumCapabilities
     cmsat_new_vars solver (fromIntegral nVarsTotal)
@@ -55,3 +56,6 @@ solve (CNF cnf' nVarsTotal vars) = do
     pure $ if result == 0
         then Just . M.fromList $ zip (S.toList vars) (map (>0) arr)
         else Nothing
+
+solve :: Ord a => CNF a -> Maybe (M.Map a Bool)
+solve = unsafePerformIO . solveIO

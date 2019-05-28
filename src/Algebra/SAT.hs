@@ -21,5 +21,5 @@ import qualified Data.Map.Strict as M
 
 -- | Convenience function for direct expression solving, without the need
 -- to convert co CNF first
-solveExpr :: Ord a => Expr a -> IO (Maybe (M.Map a Bool))
+solveExpr :: Ord a => Expr a -> Maybe (M.Map a Bool)
 solveExpr = solve . cnf

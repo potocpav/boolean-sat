@@ -26,6 +26,6 @@ main = do
         expr = premise && not consequence
 
     -- if expr is UNSAT, then premise implies consequence
-    solution <- solveExpr expr
+    let solution = solveExpr expr
     putStrLn $ "Socrates is " ++
         if isNothing solution then "right." else "wrong!"

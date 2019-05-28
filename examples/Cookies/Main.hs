@@ -32,8 +32,9 @@ module Main where
 
 import Prelude hiding (xor, not, or, (&&))
 
-import           Algebra.SAT (Expr(Var), solveExpr, dimacsExpr, cnf)
+import           Algebra.SAT (Expr(Var), solve, dimacs, cnf)
 import           Control.Monad (join, guard)
+import           Control.Arrow
 import           Data.Algebra.Boolean
 import           Data.Maybe (catMaybes)
 import qualified Data.Map.Strict as M
@@ -48,26 +49,24 @@ data Pos = Pos Int Int deriving (Eq, Ord)
 newtype Board a = Board { unBoard :: [a] } deriving (Functor, Foldable)
 
 
--- | zipWith helper over boards
-zipWithB :: (a -> b -> c) -> Board a -> Board b -> Board c
-zipWithB f (Board a) (Board b) = Board (zipWith f a b)
-
-
 -- | Enumeration of all possible positions
 positions :: Board Pos
 positions = Board [Pos i j | i <- [0..4], j <- [0..4]]
 
 
--- | Get the five squares that get flipped by a single click. Filtered to disregard out-of-bounds squares.
-neighborhood :: Pos -> [Pos]
-neighborhood p@(Pos i j) = filter (`elem` positions)
-    [p, Pos (i-1) j, Pos (i+1) j, Pos i (j-1), Pos i (j+1)]
-
-
 -- | Expression describing the final board state
 exprs :: Board Bool -> Board (Expr Pos)
 exprs startState = zipWithB xor (fromBool <$> startState) $
-    foldr1 xor . map Var . neighborhood <$> positions
+    foldr1 xor . map Var . neighborhood <$> positions where
+
+    -- | zipWith equivalent over boards
+    zipWithB :: (a -> b -> c) -> Board a -> Board b -> Board c
+    zipWithB f (Board a) (Board b) = Board (zipWith f a b)
+
+    -- | Get the five squares that get flipped by a single click. Filtered to disregard out-of-bounds squares.
+    neighborhood :: Pos -> [Pos]
+    neighborhood p@(Pos i j) = filter (`elem` positions)
+        [p, Pos (i-1) j, Pos (i+1) j, Pos i (j-1), Pos i (j+1)]
 
 
 -- | Expression that is True iff all squares are False (empty)
@@ -97,6 +96,9 @@ goal = Board . join $ map (\case {'o' -> True; '-' -> False}) <$>
 
 
 main :: IO ()
-main = solveExpr (expr goal) >>= \case
-    Just s  -> dispSolution s
-    Nothing -> putStrLn "No solution found."
+main = do
+    let cnf' = cnf (expr goal)
+    writeFile "cookies.dimacs" $ dimacs cnf'
+    case solve cnf' of
+        Just s  -> dispSolution s
+        Nothing -> putStrLn "No solution found."
