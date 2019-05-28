@@ -13,7 +13,7 @@ module Algebra.SAT.Solvers.CryptoMiniSat
 import Algebra.SAT.Solvers.CryptoMiniSatFFI as FFI
 import Algebra.SAT.Expr (CNF(..), Expr, cnf)
 import Control.Monad (forM_)
-import qualified Data.Map as M
+import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import Foreign.Marshal.Array (allocaArray, pokeArray, peekArray)
 import Foreign.Storable (peek)

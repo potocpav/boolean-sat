@@ -16,7 +16,7 @@ module Algebra.SAT
 import           Algebra.SAT.Expr (Expr(..), CNF(..), cnf, dimacsExpr)
 import           Algebra.SAT.CNF (CNF(..), dimacs, numClauses, numVars, numLiterals)
 import           Algebra.SAT.Solvers.CryptoMiniSat (solve)
-import qualified Data.Map as M
+import qualified Data.Map.Strict as M
 
 
 -- | Convenience function for direct expression solving, without the need

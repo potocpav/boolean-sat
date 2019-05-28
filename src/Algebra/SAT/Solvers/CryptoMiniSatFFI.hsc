@@ -65,30 +65,30 @@ instance Storable CSliceLBool where
 --  peek ptr = CSliceLit <$> peekByteOff ptr 0
 
 
-foreign import ccall "cmsat_new" cmsat_new
+foreign import ccall unsafe "cmsat_new" cmsat_new
     :: IO Solver
-foreign import ccall "cmsat_free" cmsat_free
+foreign import ccall unsafe "cmsat_free" cmsat_free
     :: Solver -> IO ()
 
-foreign import ccall "cmsat_nvars" cmsat_nvars
+foreign import ccall unsafe "cmsat_nvars" cmsat_nvars
     :: Solver -> IO CUInt
-foreign import ccall "cmsat_add_clause" cmsat_add_clause
+foreign import ccall unsafe "cmsat_add_clause" cmsat_add_clause
     :: Solver -> Ptr CLit -> CSize -> IO Bool
-foreign import ccall "cmsat_add_xor_clause" cmsat_add_xor_clause
+foreign import ccall unsafe "cmsat_add_xor_clause" cmsat_add_xor_clause
     :: Solver -> Ptr CUInt -> CSize -> Bool -> IO Bool
-foreign import ccall "cmsat_new_vars" cmsat_new_vars
+foreign import ccall unsafe "cmsat_new_vars" cmsat_new_vars
     :: Solver -> CSize -> IO ()
 
-foreign import ccall "cmsat_solve_wrapper" cmsat_solve_wrapper
+foreign import ccall unsafe "cmsat_solve_wrapper" cmsat_solve_wrapper
     :: Solver -> IO CBool
-foreign import ccall "cmsat_solve_with_assumptions_wrapper" cmsat_solve_with_assumptions_wrapper
+foreign import ccall unsafe "cmsat_solve_with_assumptions_wrapper" cmsat_solve_with_assumptions_wrapper
     :: Solver -> Ptr CLit -> CSize -> IO CBool
-foreign import ccall "cmsat_get_model_wrapper" cmsat_get_model_wrapper
+foreign import ccall unsafe "cmsat_get_model_wrapper" cmsat_get_model_wrapper
     :: Solver -> IO (Ptr CSliceLBool)
-foreign import ccall "cmsat_get_conflict_wrapper" cmsat_get_conflict_wrapper
+foreign import ccall unsafe "cmsat_get_conflict_wrapper" cmsat_get_conflict_wrapper
     :: Solver -> IO (Ptr CSliceLit)
-foreign import ccall "free_wrapper" free_wrapper
+foreign import ccall unsafe "free_wrapper" free_wrapper
     :: Ptr a -> IO ()
 
-foreign import ccall "cmsat_set_num_threads" cmsat_set_num_threads
+foreign import ccall unsafe "cmsat_set_num_threads" cmsat_set_num_threads
     :: Solver -> CUInt -> IO ()

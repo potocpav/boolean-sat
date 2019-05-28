@@ -2,13 +2,14 @@
 
 import Prelude hiding (xor, not, and, or)
 
-import           Algebra.SAT (Expr(Var), cnf, dimacs, solve, numClauses, numVars, numLiterals)
+import           Algebra.SAT (Expr(Var), cnf, dimacs, numClauses, numVars, numLiterals)
+import           Algebra.SAT.Solvers.Mios (solve)
 import           Control.Monad (guard)
 import           Data.Algebra.Boolean (Boolean(..))
 import           Data.List (findIndex)
 import           Data.List.Split (chunksOf)
 import           Data.Maybe (maybeToList, fromJust)
-import qualified Data.Map as M
+import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 
 
@@ -70,7 +71,7 @@ main :: IO ()
 main = do
     let e = sudoku board
     let cnf' = cnf e
-    writeFile "sudoku.dimacs" $ dimacs cnf'
+    -- writeFile "sudoku.dimacs" $ dimacs cnf'
     putStrLn $ "Number of clauses:   " <> show (numClauses cnf')
     putStrLn $ "          literals:  " <> show (numLiterals cnf')
     putStrLn $ "          variables: " <> show (numVars cnf')
