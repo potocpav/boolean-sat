@@ -1,3 +1,5 @@
+{-# LANGUAGE ScopedTypeVariables #-}
+
 {- |
 Module      :  $Header$
 Description :  CryptoMiniSat high-level interface
@@ -36,12 +38,13 @@ convertVar i | i > 0 = CLit . fromIntegral $ (i-1) * 2 + 1
 -- find a model of a given CNF expression. Returns 'Nothing' if the problem
 -- doesn't have a model (is unsatisfiable), otherwise returns 'Just' an
 -- arbitrary model.
-solveIO :: Ord a => CNF a -> IO (Maybe (M.Map a Bool))
-solveIO (CNF cnf' nVarsTotal vars) = do
+solveIO1 :: Ord a => CNF a -> IO (Maybe (M.Map a Bool))
+solveIO1 (CNF cnf' nVarsTotal vars) = do
     solver <- cmsat_new
     cmsat_set_num_threads solver =<< fromIntegral <$> getNumCapabilities
     cmsat_new_vars solver (fromIntegral nVarsTotal)
-    allocaArray 3 $ \buffer ->
+    let buffer_size = maximum $ map length cnf'
+    allocaArray buffer_size $ \buffer ->
         forM_ cnf' $ \clause -> do
             pokeArray buffer $ map convertVar clause
             cmsat_add_clause solver buffer (fromIntegral $ length clause)
@@ -57,5 +60,56 @@ solveIO (CNF cnf' nVarsTotal vars) = do
         then Just . M.fromList $ zip (S.toList vars) (map (>0) arr)
         else Nothing
 
+
+-- | Use the <https://github.com/msoos/cryptominisat CryptoMiniSat> solver to
+-- find a model of a given CNF expression. Returns 'Nothing' if the problem
+-- doesn't have a model (is unsatisfiable), otherwise returns 'Just' an
+-- arbitrary model.
+solveIO :: forall a. Ord a => CNF a -> IO [M.Map a Bool]
+solveIO (CNF cnf' nVarsTotal vars) = do
+    -- initialize solver
+    solver <- cmsat_new
+    cmsat_set_num_threads solver =<< fromIntegral <$> getNumCapabilities
+    cmsat_new_vars solver (fromIntegral nVarsTotal)
+    -- add clauses
+    let buffer_size = maximum $ map length cnf'
+    allocaArray buffer_size $ \buffer ->
+        forM_ cnf' $ \clause -> do
+            pokeArray buffer $ map convertVar clause
+            cmsat_add_clause solver buffer (fromIntegral $ length clause)
+
+    (solver, solutionM) <- solveIteration solver
+    let solutionSeq = iterateM (solveIteration . fst) (solver, absurd)
+
+    -- clean up
+    -- cmsat_free solver
+
+    pure $ case solutionM of
+        Nothing -> []
+        Just s -> [s]
+    where
+
+    solveIteration :: Solver -> IO (Maybe (Solver, M.Map a Bool))
+    solveIteration solver = do
+        -- solve the problem
+        result <- cmsat_solve_wrapper solver
+        if result /= 0 then cmsat_free solver >> pure Nothing else do
+            -- get the model
+            modelPtr <- cmsat_get_model_wrapper solver
+            model <- peek modelPtr
+            c_arr <- peekArray (fromIntegral $ bool_num_vals model) (bool_vals model)
+            let arr = map bool_x c_arr
+            -- clean up
+            free_wrapper modelPtr
+            -- return
+            pure $ Just (solver, M.fromList $ zip (S.toList vars) (map (>0) arr))
+
+
+
+iterateM :: Monad m => (a -> m a) -> a -> [m a]
+iterateM f a = iterate (>>= f) (return a)
+
+
+-- | Pure varian of the solver interface
 solve :: Ord a => CNF a -> Maybe (M.Map a Bool)
-solve = unsafePerformIO . solveIO
+solve = unsafePerformIO . solveIO1
